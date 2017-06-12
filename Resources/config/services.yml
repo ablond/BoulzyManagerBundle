@@ -1,0 +1,6 @@
+services:
+
+# Managers
+    boulzy_manager.factory.manager_factory:
+        class: 'Boulzy\ManagerBundle\Factory\DoctrineManagerFactory'
+        arguments: ['@doctrine.orm.entity_manager']
