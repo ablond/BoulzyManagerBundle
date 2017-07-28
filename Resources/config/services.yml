@@ -1,6 +1,7 @@
 services:
+    Boulzy\ManagerBundle\Factory\ManagerFactory:
+        arguments: ["@=service(parameter('boulzy_manager.doctrine.object_manager'))", "@=service(parameter('boulzy_manager.default_manager'))"]
+        public: true
 
-# Managers
-    boulzy_manager.factory.manager_factory:
-        class: 'Boulzy\ManagerBundle\Factory\DoctrineManagerFactory'
-        arguments: ['@doctrine.orm.entity_manager']
+    Boulzy\ManagerBundle\Manager\DefaultManager:
+        arguments: ["@=service(parameter('boulzy_manager.doctrine.object_manager'))"]

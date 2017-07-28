@@ -1,3 +1,5 @@
-/phpunit.xml
+/Resources/code-coverage
 /vendor/
+/composer.lock
+/phpunit.xml
 .DS_Store

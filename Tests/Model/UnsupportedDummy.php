@@ -12,9 +12,9 @@
 namespace Boulzy\ManagerBundle\Tests\Model;
 
 /**
- * Dummy model used to test abstract classes.
+ * Dummy model used to test the bundle.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 class UnsupportedDummy
 {

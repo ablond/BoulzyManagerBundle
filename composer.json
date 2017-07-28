@@ -1,7 +1,7 @@
 {
     "name": "boulzy/manager-bundle",
     "type": "symfony-bundle",
-    "description": "The BoulzyManagerBundle provides a base to implement in order to homogenize your models logic. It also provides a basic implementation for Doctrine managed models.",
+    "description": "The BoulzyManagerBundle provides managers services for your Doctrine managed models.",
     "keywords": ["manager", "bundle", "symfony", "doctrine", "model"],
     "homepage": "https://github.com/B0ulzy/BoulzyManagerBundle",
     "license": "MIT",
@@ -25,17 +25,19 @@
         }
     },
     "require": {
-        "php": ">=7.0.0"
+        "php": "^7.1",
+        "symfony/framework-bundle": "^3.3",
+        "doctrine/doctrine-bundle": "^1.6"
     },
     "require-dev": {
         "phpunit/phpunit": "^6.2",
-        "doctrine/doctrine-bundle": "^1.6",
-        "symfony/yaml": "^3.3"
+        "doctrine/orm": "^2.5"
     },
     "suggest": {
-        "symfony/symfony": "This bundle offers more features when used as a Symfony bundle.",
-        "doctrine/doctrine-bundle": "This bundle offers more features when used with Doctrine.",
-        "doctrine/orm": "This bundle offers more features when used with Doctrine."
+        "doctrine/orm": "To persist your entities using a SQL database.",
+        "doctrine/mongodb-odm": "To persist your entities using MongoDB.",
+        "doctrine/couchdb-odm": "To persist your entities using CouchDB.",
+        "doctrine/phpcr-odm": "To persist your entities using PHPCR."
     },
     "minimum-stability": "stable"
 }

@@ -11,21 +11,70 @@
 
 namespace Boulzy\ManagerBundle\Manager;
 
+use Boulzy\ManagerBundle\Exception\UnsupportedClassException;
+use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Common\Persistence\ObjectRepository;
+
 /**
- * Provides a base for managers.
+ * Manager for Doctrine entities/documents.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 abstract class Manager implements ManagerInterface
 {
     /**
-     * @var string
+     * @var ObjectManager
      */
-    protected $class;
+    protected $om;
 
-    public function __construct(string $class)
+    /**
+     * @var ObjectRepository
+     */
+    protected $repository;
+
+    public function __construct(ObjectManager $om)
     {
-        $this->class = $class;
+        $this->om = $om;
+    }
+
+    /**
+     * Alias for ObjectRepository::find() method.
+     * 
+     * {@inheritDoc}
+     */
+    public function get($id)
+    {
+        return $this->getRepository()->find($id);
+    }
+
+    /**
+     * Alias for ObjectRepository::findAll() method.
+     * 
+     * {@inheritDoc}
+     */
+    public function getAll(): array
+    {
+        return $this->getRepository()->findAll();
+    }
+
+    /**
+     * Alias for ObjectRepository::findBy() method.
+     * 
+     * {@inheritDoc}
+     */
+    public function getBy(array $criteria, array $orderBy = null, $limit = null, $offset = null): array
+    {
+        return $this->getRepository()->findBy($criteria, $orderBy, $limit, $offset);
+    }
+
+    /**
+     * Alias for ObjectRepository::findOneBy() method.
+     * 
+     * {@inheritDoc}
+     */
+    public function getOneBy(array $criteria)
+    {
+        return $this->getRepository()->findOneBy($criteria);
     }
 
     /**
@@ -40,6 +89,36 @@ abstract class Manager implements ManagerInterface
 
     /**
      * {@inheritDoc}
+     * 
+     * @throws UnsupportedClassException
+     */
+    public function save($object)
+    {
+        if (!$this->supports($object)) {
+            throw new UnsupportedClassException(get_class($object), self::class);
+        }
+
+        $this->om->persist($object);
+        $this->om->flush();
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @throws UnsupportedClassException
+     */
+    public function delete($object)
+    {
+        if (!$this->supports($object)) {
+            throw new UnsupportedClassException(get_class($object), self::class);
+        }
+
+        $this->om->remove($object);
+        $this->om->flush();
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function supports($object): bool
     {
@@ -50,10 +129,16 @@ abstract class Manager implements ManagerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * Gets the class repository.
+     * 
+     * @return ObjectRepository
      */
-    public function getClass(): string
+    public function getRepository(): ObjectRepository
     {
-        return $this->class;
+        if ($this->repository === null) {
+            $this->repository = $this->om->getRepository($this->getClass());
+        }
+
+        return $this->repository;
     }
 }

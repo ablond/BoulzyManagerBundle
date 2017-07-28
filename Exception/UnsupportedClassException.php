@@ -15,7 +15,7 @@ namespace Boulzy\ManagerBundle\Exception;
  * This exception is thrown when a manager has to deal with an unsupported class.
  * This probably means there's something to fix in your code.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 class UnsupportedClassException extends \LogicException
 {

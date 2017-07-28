@@ -18,7 +18,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 /**
  * Bundle definition.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 class BoulzyManagerBundle extends Bundle
 {

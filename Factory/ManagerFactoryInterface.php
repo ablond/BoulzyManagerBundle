@@ -16,12 +16,12 @@ use Boulzy\ManagerBundle\Manager\ManagerInterface;
 /**
  * Interface to be implemented by manager factories.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 interface ManagerFactoryInterface
 {
     /**
-     * Get the manager for the class instance / name.
+     * Gets the manager for the class instance / name.
      * 
      * @param object|string $class Either the class name, or an instance of the class.
      * @return ManagerInterface
@@ -29,7 +29,7 @@ interface ManagerFactoryInterface
     public function getManager($class): ManagerInterface;
 
     /**
-     * Add a manager to the factory.
+     * Adds a manager to the factory.
      * 
      * @param ManagerInterface $manager
      */

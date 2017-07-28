@@ -11,17 +11,22 @@
 
 namespace Boulzy\ManagerBundle\Tests\Factory;
 
-use Boulzy\ManagerBundle\Tests\Model\Dummy;
-use Boulzy\ManagerBundle\Tests\Model\ExtendedDummy;
+use Boulzy\ManagerBundle\Tests\Entity\Dummy;
+use Boulzy\ManagerBundle\Tests\Entity\SubDummy;
+use Boulzy\ManagerBundle\Tests\Entity\SubSubDummy;
 use Boulzy\ManagerBundle\Tests\Model\UnsupportedDummy;
 use Boulzy\ManagerBundle\Factory\ManagerFactory;
+use Boulzy\ManagerBundle\Manager\DefaultManager;
 use Boulzy\ManagerBundle\Manager\ManagerInterface;
+use Doctrine\Common\Persistence\Mapping\ClassMetadataFactory;
+use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Common\Persistence\ObjectRepository;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Test class for ManagerFactory abstract class.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 class ManagerFactoryTest extends TestCase
 {
@@ -35,11 +40,26 @@ class ManagerFactoryTest extends TestCase
      */
     public function setUp()
     {
-        $this->managerFactory = new DummyManagerFactory();
+        $om = $this->createMock(ObjectManager::class);
+
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('isTransient')
+           ->will($this->returnCallback(function() {
+               $classname = func_get_arg(0);
+
+               return strpos($classname, '\\Entity\\') === false;
+           }));
+
+        $om->method('getMetaDataFactory')
+                ->willReturn($metadataFactory);
+        
+        $defaultManager = new DefaultManager($om);
+
+        $this->managerFactory = new ManagerFactory($om, $defaultManager);
     }
 
     /**
-     * Test ManagerFactory::addManager() method.
+     * Tests ManagerFactory::addManager() method.
      */
     public function testAddManager()
     {
@@ -51,7 +71,7 @@ class ManagerFactoryTest extends TestCase
     }
 
     /**
-     * Test ManagerFactory::getManager() method with no manager registered.
+     * Tests ManagerFactory::getManager() method with no manager registered.
      */
     public function testGetDefaultManager()
     {
@@ -60,7 +80,7 @@ class ManagerFactoryTest extends TestCase
     }
 
     /**
-     * Test ManagerFactory::getManager() method with a supported class.
+     * Tests ManagerFactory::getManager() method with a supported class.
      */
     public function testGetManagerWithSupportedClass()
     {
@@ -72,7 +92,7 @@ class ManagerFactoryTest extends TestCase
     }
 
     /**
-     * Test ManagerFactory::getManager() method with a supported object.
+     * Tests ManagerFactory::getManager() method with a supported object.
      */
     public function testGetManagerWithSupportedObject()
     {
@@ -85,34 +105,34 @@ class ManagerFactoryTest extends TestCase
     }
 
     /**
-     * Test ManagerFactory::getManager() method with a supported class.
+     * Tests ManagerFactory::getManager() method with a supported class.
      */
     public function testGetManagerWithSupportedExtendedClass()
     {
         $manager = $this->getManagerMock();
         $this->managerFactory->addManager($manager);
 
-        $manager = $this->managerFactory->getManager(ExtendedDummy::class);
+        $manager = $this->managerFactory->getManager(SubDummy::class);
         $this->assertInstanceOf(ManagerInterface::class, $manager);
     }
 
     /**
-     * Test ManagerFactory::getManager() method with a supported object.
+     * Tests ManagerFactory::getManager() method with a supported object.
      */
     public function testGetManagerWithSupportedExtendedObject()
     {
         $manager = $this->getManagerMock();
         $this->managerFactory->addManager($manager);
 
-        $dummy = new ExtendedDummy();
+        $dummy = new SubDummy();
         $manager = $this->managerFactory->getManager($dummy);
         $this->assertInstanceOf(ManagerInterface::class, $manager);
     }
 
     /**
-     * Test ManagerFactory::getManager() method with an unsupported class.
+     * Tests ManagerFactory::getManager() method with an unsupported class.
      * 
-     * @expectedException \Boulzy\ManagerBundle\Exception\UnresolvedManagerException
+     * @expectedException \Boulzy\ManagerBundle\Exception\UnsupportedClassException
      */
     public function testGetManagerWithUnsupportedClass()
     {
@@ -123,9 +143,9 @@ class ManagerFactoryTest extends TestCase
     }
 
     /**
-     * Test ManagerFactory::getManager() method with an unsupported object.
+     * Tests ManagerFactory::getManager() method with an unsupported object.
      * 
-     * @expectedException \Boulzy\ManagerBundle\Exception\UnresolvedManagerException
+     * @expectedException \Boulzy\ManagerBundle\Exception\UnsupportedClassException
      */
     public function testGetManagerWithUnsupportedObject()
     {
@@ -137,25 +157,88 @@ class ManagerFactoryTest extends TestCase
     }
 
     /**
-     * Get a manager mock for the Dummy model.
+     * Tests ManagerFactory::getManager() method with multiple supporting managers.
+     */
+    public function testGetManagerWithMultipleManagers()
+    {
+        $dummyManager = $this->createManager(Dummy::class);
+        $extendedDummyManager = $this->createManager(SubDummy::class);
+        $unsupportedDummyManager = $this->createManager(\Boulzy\ManagerBundle\Tests\Entity\UnsupportedDummy::class);
+
+        $this->managerFactory
+            ->addManager($dummyManager)
+            ->addManager($extendedDummyManager)
+            ->addManager($unsupportedDummyManager)
+        ;
+
+        $manager = $this->managerFactory->getManager(SubSubDummy::class);
+
+        $this->assertInstanceOf(ManagerInterface::class, $manager);
+    }
+
+    /**
+     * Gets a manager mock for a class.
      * 
+     * @param string|null $class
      * @return ManagerInterface
      */
-    private function getManagerMock()
+    private function getManagerMock(string $class = null)
     {
+        $class = $class ?? Dummy::class;
+
         $manager = $this->createMock(ManagerInterface::class);
         $manager->method('getClass')
-                ->willReturn(Dummy::class);
-        $manager->method('supports')
-                ->will($this->returnCallback(function() {
-                    $object = func_get_arg(0);
-
-                    $class = is_object($object) ? get_class($object) : $object;
-                    $supportedClass = Dummy::class;
-
-                    return $class === $supportedClass || is_subclass_of($class, $supportedClass);
-                }));
+                ->willReturn($class);
 
         return $manager;
+    }
+
+    /**
+     * Returns an instance of the DefaultManager for a class.
+     * 
+     * @param string $class
+     * @return DefaultManager
+     */
+    public function createManager(string $class)
+    {
+        $manager = new DefaultManager($this->getObjectManagerMock());
+        $manager->setClass($class);
+
+        return $manager;
+    }
+
+    /**
+     * Gets ObjectManager mock.
+     * 
+     * @return ObjectRepository|null
+     * @return ObjectManager
+     */
+    private function getObjectManagerMock(ObjectRepository $repository = null): ObjectManager
+    {
+        if ($repository === null) {
+            $repository = $this->getObjectRepositoryMock();
+        }
+
+        $om = $this->createMock(ObjectManager::class);
+
+        $om->method('getRepository')
+           ->willReturn($repository);
+
+        return $om;
+    }
+
+    /**
+     * Gets ObjectRepository mock.
+     * 
+     * @return ObjectRepository
+     */
+    private function getObjectRepositoryMock(): ObjectRepository
+    {
+        $repository = $this->createMock(ObjectRepository::class);
+
+        $repository->method('getClassName')
+                   ->willReturn(Dummy::class);
+
+        return $repository;
     }
 }

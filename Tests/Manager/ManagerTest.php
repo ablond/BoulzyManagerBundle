@@ -11,102 +11,254 @@
 
 namespace Boulzy\ManagerBundle\Tests\Manager;
 
+use Boulzy\ManagerBundle\Manager\DefaultManager;
 use Boulzy\ManagerBundle\Manager\Manager;
-use Boulzy\ManagerBundle\Tests\Model\Dummy;
-use Boulzy\ManagerBundle\Tests\Model\UnsupportedDummy;
+use Boulzy\ManagerBundle\Tests\Entity\Dummy;
+use Boulzy\ManagerBundle\Tests\Entity\UnsupportedDummy;
+use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Common\Persistence\ObjectRepository;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Test class for Manager abstract class.
+ * Test class for the Manager service.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 class ManagerTest extends TestCase
 {
     /**
-     * @var Manager
+     * Tests Manager::get() method.
      */
-    private $manager;
-
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp()
+    public function testGet()
     {
-        $this->manager = new DummyManager(Dummy::class);
-    }
+        $repository = $this->getObjectRepositoryMock();
+        $repository->expects($this->once())
+                   ->method('find')
+                   ->with(123)
+                   ->willReturn(new Dummy());
 
-    /**
-     * Test Manager::create() method.
-     */
-    public function testCreate()
-    {
-        $dummy = $this->manager->create();
+        $manager = $this->getManager(null, $repository);
+        $dummy = $manager->get(123);
 
         $this->assertInstanceOf(Dummy::class, $dummy);
     }
 
     /**
-     * Test Manager::supports() method with a supported class.
+     * Tests Manager::getAll() method.
      */
-    public function testSupportsWithSupportedClass()
+    public function testGetAll()
+    {
+        $repository = $this->getObjectRepositoryMock();
+        $repository->expects($this->once())
+                   ->method('findAll')
+                   ->willReturn(array(
+                       new Dummy(),
+                       new Dummy()
+                   ));
+
+        $manager = $this->getManager(null, $repository);
+        $dummies = $manager->getAll(123);
+
+        $this->assertTrue(is_array($dummies));
+        $this->assertEquals(2, count($dummies));
+        foreach ($dummies as $dummy) {
+            $this->assertInstanceOf(Dummy::class, $dummy);
+        }
+    }
+
+    /**
+     * Tests Manager::getBy() method.
+     */
+    public function testGetBy()
+    {
+        $repository = $this->getObjectRepositoryMock();
+        $repository->expects($this->once())
+                   ->method('findBy')
+                   ->with(array('test' => 123))
+                   ->willReturn(array(
+                       new Dummy(),
+                       new Dummy()
+                    ));
+
+        $manager = $this->getManager(null, $repository);
+        $dummies = $manager->getBy(array('test' => 123));
+
+        $this->assertTrue(is_array($dummies));
+        $this->assertEquals(2, count($dummies));
+        foreach ($dummies as $dummy) {
+            $this->assertInstanceOf(Dummy::class, $dummy);
+        }
+    }
+
+    /**
+     * Tests Manager::getOneBy() method.
+     */
+    public function testGetOneBy()
+    {
+        $repository = $this->getObjectRepositoryMock();
+        $repository->expects($this->once())
+                   ->method('findOneBy')
+                   ->with(array('test' => 123))
+                   ->willReturn(new Dummy());
+
+        $manager = $this->getManager(null, $repository);
+        $dummy = $manager->getOneBy(array('test' => 123));
+
+        $this->assertInstanceOf(Dummy::class, $dummy);
+    }
+
+    /**
+     * Tests Manager::create() method.
+     */
+    public function testCreate()
+    {
+        $dummy = $this->getManager()->create();
+
+        $this->assertInstanceof(Dummy::class, $dummy);
+    }
+
+    /**
+     * Tests Manager::save() method with a supported object.
+     */
+    public function testSaveWithSupportedObject()
     {
         $dummy = new Dummy();
 
-        $isSupported = $this->manager->supports($dummy);
+        $om = $this->getObjectManagerMock();
+        $om->expects($this->once())
+           ->method('persist')
+           ->with($dummy)
+           ->willReturnSelf();
 
-        $this->assertTrue($isSupported);
+        $om->expects($this->once())
+           ->method('flush');
+
+        $manager = $this->getManager($om);
+        $manager->save($dummy);
     }
 
     /**
-     * Test Manager::supports() method with an unsupported class.
+     * Tests Manager::save() method with an unsupported object.
+     * 
+     * @expectedException \Boulzy\ManagerBundle\Exception\UnsupportedClassException
      */
-    public function testSupportsWithUnsupportedClass()
+    public function testSaveWithUnsupportedObject()
     {
         $dummy = new UnsupportedDummy();
 
-        $isSupported = $this->manager->supports($dummy);
-
-        $this->assertFalse($isSupported);
+        $this->getManager()->save($dummy);
     }
 
     /**
-     * Test Manager::supports() method with a supported object.
+     * Tests Manager::delete() method with a supported object.
      */
-    public function testSupportsWithSupportedObject()
+    public function testDeleteWithSupportedObject()
     {
-        $isSupported = $this->manager->supports(Dummy::class);
+        $dummy = new Dummy();
 
-        $this->assertTrue($isSupported);
+        $om = $this->getObjectManagerMock();
+        $om->expects($this->once())
+           ->method('remove')
+           ->with($dummy)
+           ->willReturnSelf();
+
+        $om->expects($this->once())
+           ->method('flush');
+
+        $manager = $this->getManager($om);
+        $manager->delete($dummy);
     }
 
     /**
-     * Test Manager::supports() method with an unsupported object.
+     * Tests Manager::delete() method with an unsupported object.
+     * 
+     * @expectedException \Boulzy\ManagerBundle\Exception\UnsupportedClassException
      */
-    public function testSupportsWithUnsupportedObject()
+    public function testDeleteWithUnsupportedObject()
     {
-        $isSupported = $this->manager->supports(UnsupportedDummy::class);
+        $dummy = new UnsupportedDummy();
 
-        $this->assertFalse($isSupported);
+        $this->getManager()->delete($dummy);
     }
 
     /**
-     * Test Manager::supports() method with an unexpected type as parameter.
-     */
-    public function testSupportsWithUnexpectedType()
-    {
-        $isSupported = $this->manager->supports(array());
-
-        $this->assertfalse($isSupported);
-    }
-
-    /**
-     * Test Manager::getClass() method.
+     * Tests Manager::getClass() method.
      */
     public function testGetClass()
     {
-        $class = $this->manager->getClass();
+        $manager = $this->getManager();
+        $class = $manager->getClass();
 
         $this->assertEquals(Dummy::class, $class);
+    }
+
+    /**
+     * Tests Manager::getRepository() method.
+     */
+    public function testGetRepository()
+    {
+        $manager = $this->getManager();
+
+        $repository = $manager->getRepository();
+
+        $this->assertInstanceOf(ObjectRepository::class, $repository);
+        $this->assertEquals(Dummy::class, $repository->getClassName());
+    }
+
+    /**
+     * Gets an instance of DefaultManager.
+     * 
+     * @param ObjectManager|null $om
+     * @param ObjectRepository|null $repository
+     * @return Manager
+     */
+    private function getManager(ObjectManager $om = null, ObjectRepository $repository = null)
+    {
+        if ($repository === null) {
+            $repository = $this->getObjectRepositoryMock();
+        }
+
+        if ($om === null) {
+            $om = $this->getObjectManagerMock($repository);
+        }
+
+        $manager = new DefaultManager($om);
+        $manager->setClass(Dummy::class);
+
+        return $manager;
+    }
+
+    /**
+     * Gets ObjectManager mock.
+     * 
+     * @return ObjectManager
+     */
+    private function getObjectManagerMock(ObjectRepository $repository = null): ObjectManager
+    {
+        if ($repository === null) {
+            $repository = $this->getObjectRepositoryMock();
+        }
+
+        $om = $this->createMock(ObjectManager::class);
+
+        $om->method('getRepository')
+           ->willReturn($repository);
+
+        return $om;
+    }
+
+    /**
+     * Gets ObjectRepository mock.
+     * 
+     * @return ObjectRepository
+     */
+    private function getObjectRepositoryMock(): ObjectRepository
+    {
+        $repository = $this->createMock(ObjectRepository::class);
+
+        $repository->method('getClassName')
+                   ->willReturn(Dummy::class);
+
+        return $repository;
     }
 }

@@ -1,20 +1,15 @@
 Getting started with BoulzyManagerBundle
 ========================================
 
-The purpose of this bundle is to add Twig extensions providing helpful globals,
-filters, etc...
-
 Prerequisites
 -------------
 
-This version of the bundle requires PHP 7.0+, Symfony 3.3+ and DoctrineBundle 1.6+.
-Note that you can use this bundle as a standalone library, without Doctrine and/or Symfony.
-It loses a lot of its utility though.
+This version of the bundle requires PHP ^7.1, Symfony ^3.3 and DoctrineBundle ^1.6.
 
 Installation
 ------------
 
-Installation is done in two quick steps:
+Installation is done in three quick steps:
 
 Step 1: Download BoulzyManagerBundle using composer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,7 +18,7 @@ Require the bundle with composer:
 
 .. code-block:: bash
 
-    $ composer require boulzy/manager-bundle "dev-master"
+    $ composer require boulzy/manager-bundle
 
 Composer will install the bundle to your project's ``vendor/boulzy/manager-bundle``.
 directory.
@@ -31,7 +26,9 @@ directory.
 Step 2: Enable the bundle
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Enable the bundle in the kernel::
+Enable the bundle in the kernel:
+
+.. code-block:: php
 
     <?php
     // app/AppKernel.php
@@ -47,15 +44,26 @@ Enable the bundle in the kernel::
 
 That's it! You're now ready to use managers in your project.
 
-Usage
------
+Step 3: Configure the bundle
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Managers purpose is to handle your models logic without worrying about how your data
-are retrieved.
+The bundle needs to know which Doctrine driver you use to define the right Doctrine
+ObjectManager to use in the managers.
 
-If you're using Doctrine, you will fetch your data using repositories.
-If you're using an API, you will probably have a SDK or have you own services to map
-your models with the API endpoints.
+.. code-block:: yaml
 
-Managers abstract this part to provide methods you can use globally without worrying
-how your data are fetched. It also is a very good place to store your models logic.
+    boulzy_manager:
+        db_driver: orm  # Possible values: orm|mongodb|couchdb|phpcr
+
+
+Next steps
+----------
+
+- Usage_
+- `Custom default manager`_
+- `Configuration reference`_
+
+
+  .. _Usage: ./usage.rst
+  .. _Custom default manager: ./custom-default-manager.rst
+  .. _Configuration reference: ./configuration-reference.rst

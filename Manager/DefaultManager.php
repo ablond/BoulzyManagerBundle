@@ -9,13 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Boulzy\ManagerBundle\Tests\Model;
+namespace Boulzy\ManagerBundle\Manager;
 
 /**
- * Dummy model used to test abstract classes.
+ * Base class for default managers.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
-class ExtendedDummy extends Dummy
+class DefaultManager extends Manager
 {
+    use DefaultManagerTrait;
 }

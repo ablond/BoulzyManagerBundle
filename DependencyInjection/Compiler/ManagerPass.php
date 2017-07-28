@@ -11,30 +11,33 @@
 
 namespace Boulzy\ManagerBundle\DependencyInjection\Compiler;
 
+use Boulzy\ManagerBundle\Factory\ManagerFactory;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * A compiler pass to register tagged managers into the manager factory.
+ * Registers tagged managers into the manager factory.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 class ManagerPass implements CompilerPassInterface
 {
+    /**
+     * {@inheritDoc}
+     */
     public function process(ContainerBuilder $container)
     {
-        // always first check if the primary service is defined
-        if (!$container->has('boulzy_manager.factory.manager_factory')) {
+        if (!$container->has(ManagerFactory::class)) {
             return;
         }
 
-        $definition = $container->findDefinition('boulzy_manager.factory.manager_factory');
+        $definition = $container->findDefinition(ManagerFactory::class);
 
-        // find all service IDs with the app.mail_transport tag
         $taggedServices = $container->findTaggedServiceIds('boulzy_manager.manager');
-        foreach ($taggedServices as $id => $tags) {
-            // add the transport service to the ChainTransport service
+        $taggedServicesIds = array_keys($taggedServices);
+
+        foreach ($taggedServicesIds as $id) {
             $definition->addMethodCall('addManager', array(new Reference($id)));
         }
     }

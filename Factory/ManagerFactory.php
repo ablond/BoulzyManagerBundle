@@ -11,25 +11,73 @@
 
 namespace Boulzy\ManagerBundle\Factory;
 
-use Boulzy\ManagerBundle\Exception\NonUniqueManagerException;
 use Boulzy\ManagerBundle\Exception\UnresolvedManagerException;
+use Boulzy\ManagerBundle\Exception\UnsupportedClassException;
 use Boulzy\ManagerBundle\Manager\ManagerInterface;
+use Boulzy\ManagerBundle\Util\ManagerUtil;
+use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Common\Util\ClassUtils;
 
 /**
  * Factory for managers.
  * 
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
-abstract class ManagerFactory implements ManagerFactoryInterface
+final class ManagerFactory implements ManagerFactoryInterface
 {
+    /**
+     * @var ObjectManager
+     */
+    private $om;
+
     /**
      * @var array
      */
-    protected $managers;
+    private $managers;
 
-    public function __construct()
+    /**
+     * @var ManagerInterface
+     */
+    private $defaultManager;
+
+    public function __construct(ObjectManager $om, ManagerInterface $defaultManager)
     {
+        $this->om = $om;
         $this->managers = array();
+
+        if (!ManagerUtil::isDefaultManager($defaultManager)) {
+            throw new \LogicException(
+                'The default manager must use the trait "Boulzy\ManagerBundle\Manager\DefaultManagerTrait".'
+            );
+        }
+        $this->defaultManager = $defaultManager;
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @throws UnsupportedClassException The class is not supported by any manager.
+     */
+    public function getManager($class): ManagerInterface
+    {
+        $classname = $this->getClassname($class);
+        if (!$this->isDoctrineModel($classname)) {
+            throw new UnsupportedClassException($classname, ManagerInterface::class);
+        }
+
+        // Check if a manager is registered for the class
+        $manager = $this->getManagerByClass($classname);
+        if ($manager !== null) {
+            return $manager;
+        }
+
+        // If not, try to find a manager that supports the class
+        $manager = $this->getManagerBySupportedClass($classname);
+        if ($manager !== null) {
+            return $manager;
+        }
+
+        return $this->getDefaultManager($classname);
     }
 
     /**
@@ -45,57 +93,20 @@ abstract class ManagerFactory implements ManagerFactoryInterface
     }
 
     /**
-     * {@inheritDoc}
-     * 
-     * @throws UnresolvedManagerException The class is not supported by any manager.
-     */
-    public function getManager($class): ManagerInterface
-    {
-        $classname = $this->getClassname($class);
-
-        // Check if a manager is registered for the class
-        $manager = $this->getManagerByClass($classname);
-
-        // If not, try to find a manager that supports the class
-        if ($manager === null) {
-            $manager = $this->getManagerBySupportedClass($classname);
-        }
-
-        // If no existing manager supports the class, try to create a default one
-        if ($manager === null) {
-            $manager = $this->getDefaultManager($classname);
-        }
-
-        // If no default manager could be created, the class is probably not suitable
-        // to be handled by a manager.
-        if ($manager === null) {
-            throw new UnresolvedManagerException($classname);
-        }
-
-        return $manager;
-    }
-
-    /**
-     * Return the class name.
+     * Gets the real class of the model.
+     * It prevents the Doctrine proxy class to prevent the factory to retrieve
+     * the manager.
      * 
      * @param object|string $class
-     * @return string
+     * @return string $class
      */
-    protected function getClassname($class): string
+    private function getClassname($class): string
     {
-        return is_object($class) ? get_class($class): $class;
+        return is_object($class) ? ClassUtils::getClass($class) : ClassUtils::getRealClass($class);
     }
 
     /**
-     * Get default manager.
-     * 
-     * @param string $classname
-     * @return ManagerInterface|null
-     */
-    abstract protected function getDefaultManager(string $classname);
-
-    /**
-     * Get manager by class name.
+     * Gets manager by class name.
      * 
      * @param string $classname
      * @return ManagerInterface|null
@@ -110,7 +121,7 @@ abstract class ManagerFactory implements ManagerFactoryInterface
     }
 
     /**
-     * Get manager supporting parent class of the class name.
+     * Gets manager supporting parent class of the class name.
      * 
      * @param string $classname
      * @return ManagerInterface|null
@@ -140,7 +151,20 @@ abstract class ManagerFactory implements ManagerFactoryInterface
     }
 
     /**
-     * Get the most appropriate manager for the class.
+     * Creates a default manager for the given class.
+     * 
+     * @return DefaultManager|null
+     */
+    private function getDefaultManager(string $classname): ?ManagerInterface
+    {
+        $manager = clone $this->defaultManager;
+        $manager->setClass($classname);
+
+        return $manager;
+    }
+
+    /**
+     * Gets the most appropriate manager for the class.
      * 
      * @param string $classname
      * @return ManagerInterface
@@ -151,13 +175,6 @@ abstract class ManagerFactory implements ManagerFactoryInterface
     {
         $manageParent1 = is_subclass_of($classname, $manager1->getClass());
         $manageParent2 = is_subclass_of($classname, $manager2->getClass());
-
-        // Both managers supports natively the class, not because they manage a
-        // parent of the class. There's no way to determine which manager is the
-        // most appropriate.
-        if ($manageParent1 === false && $manageParent2 === false) {
-            throw new NonUniqueManagerException($classname);
-        }
 
         // The first manager supports a parent class of the tested class, whereas
         // the second manager supports it for a most specific reason. $manager2 has priority.
@@ -175,10 +192,6 @@ abstract class ManagerFactory implements ManagerFactoryInterface
         // manages the most closest parent has priority.
         $parents = $this->getClassParents($classname);
         foreach ($parents as $parent) {
-            if ($manager1->getClass() === $parent && $manager2->getClass() === $parent) {
-                throw new NonUniqueManagerException($classname);
-            }
-
             if ($manager1->getClass() === $parent) {
                 return $manager1;
             }
@@ -189,10 +202,21 @@ abstract class ManagerFactory implements ManagerFactoryInterface
         }
 
         throw new UnresolvedManagerException($classname);
-    }    
+    }
 
     /**
-     * Get a class parents ordered from the closest to the furthest.
+     * Checks if a class is managed by doctrine.
+     * 
+     * @param string $classname
+     * @return bool
+     */
+    private function isDoctrineModel(string $classname)
+    {
+        return !$this->om->getMetadataFactory()->isTransient($classname);
+    }
+
+    /**
+     * Gets a class parents ordered from the closest to the furthest.
      * 
      * @param string $classname
      * @return array

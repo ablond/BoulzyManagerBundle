@@ -15,7 +15,7 @@ namespace Boulzy\ManagerBundle\Exception;
  * This exception is thrown when a manager cannot be resolved for a class.
  * This probably means that you're trying to find a manager for an unsuitable class.
  *  
- * @author Rémi Houdelette <https://github.com/B0ulzy>
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 class UnresolvedManagerException extends \LogicException
 {
