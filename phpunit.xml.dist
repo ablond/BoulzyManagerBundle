@@ -11,9 +11,11 @@
         <whitelist>
             <directory>./</directory>
             <exclude>
+                <directory>./DependencyInjection</directory>
                 <directory>./Resources</directory>
                 <directory>./Tests</directory>
                 <directory>./vendor</directory>
+                <file>BoulzyManagerBundle.php</file>
             </exclude>
         </whitelist>
     </filter>

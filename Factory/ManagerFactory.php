@@ -61,9 +61,6 @@ final class ManagerFactory implements ManagerFactoryInterface
     public function getManager($class): ManagerInterface
     {
         $classname = $this->getClassname($class);
-        if (!$this->isDoctrineModel($classname)) {
-            throw new UnsupportedClassException($classname, ManagerInterface::class);
-        }
 
         // Check if a manager is registered for the class
         $manager = $this->getManagerByClass($classname);
@@ -75,6 +72,10 @@ final class ManagerFactory implements ManagerFactoryInterface
         $manager = $this->getManagerBySupportedClass($classname);
         if ($manager !== null) {
             return $manager;
+        }
+
+        if (!$this->isDoctrineModel($classname)) {
+            throw new UnsupportedClassException($classname, ManagerInterface::class);
         }
 
         return $this->getDefaultManager($classname);
