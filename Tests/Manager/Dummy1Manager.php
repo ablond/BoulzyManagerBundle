@@ -9,17 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace Boulzy\ManagerBundle\Tests\Entity;
+namespace Tests\Boulzy\ManagerBundle\Manager;
 
-use Doctrine\ORM\Mapping as ORM;
+use Boulzy\ManagerBundle\Manager\Manager;
+use Tests\Boulzy\ManagerBundle\Model\Dummy1;
 
-/**
- * Dummy entity used to test the bundle.
- * 
- * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
- * 
- * @ORM\Entity
- */
-class Dummy
+class Dummy1Manager extends Manager
 {
+    public function getClass(): string
+    {
+        return Dummy1::class;
+    }
 }

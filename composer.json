@@ -1,8 +1,8 @@
 {
     "name": "boulzy/manager-bundle",
     "type": "symfony-bundle",
-    "description": "The BoulzyManagerBundle provides managers services for your Doctrine managed models.",
-    "keywords": ["manager", "bundle", "symfony", "doctrine", "model"],
+    "description": "A Symfony bundle providing managers to handle your domain logics using Doctrine.",
+    "keywords": ["manager", "bundle", "symfony", "doctrine", "domain", "model", "logic"],
     "homepage": "https://github.com/B0ulzy/BoulzyManagerBundle",
     "license": "MIT",
     "authors": [
@@ -21,23 +21,19 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Boulzy\\ManagerBundle\\": ""
+            "Tests\\Boulzy\\ManagerBundle\\": "Tests/"
         }
     },
     "require": {
         "php": "^7.1",
-        "symfony/framework-bundle": "^3.3",
-        "doctrine/doctrine-bundle": "^1.6"
+        "symfony/framework-bundle": "^3.3 || ^4.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^6.2",
-        "doctrine/orm": "^2.5"
-    },
-    "suggest": {
-        "doctrine/orm": "To persist your entities using a SQL database.",
-        "doctrine/mongodb-odm": "To persist your entities using MongoDB.",
-        "doctrine/couchdb-odm": "To persist your entities using CouchDB.",
-        "doctrine/phpcr-odm": "To persist your entities using PHPCR."
+        "doctrine/dbal": "^2.6",
+
+        "doctrine/common": "^2.8",
+        "phpunit/phpunit": "^7.0",
+        "friendsofphp/php-cs-fixer": "^2.2"
     },
     "minimum-stability": "stable"
 }

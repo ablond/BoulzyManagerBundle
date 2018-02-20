@@ -9,17 +9,8 @@
  * file that was distributed with this source code.
  */
 
-namespace Boulzy\ManagerBundle\Tests\Entity;
+namespace Tests\Boulzy\ManagerBundle\Model;
 
-use Doctrine\ORM\Mapping as ORM;
-
-/**
- * Dummy entity used to test the bundle.
- * 
- * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
- * 
- * @ORM\Entity
- */
-class SubDummy extends Dummy
+class Dummy2 extends Dummy1
 {
 }

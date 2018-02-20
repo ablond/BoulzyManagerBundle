@@ -1,7 +1,3 @@
 services:
-    Boulzy\ManagerBundle\Factory\ManagerFactory:
-        arguments: ["@=service(parameter('boulzy_manager.doctrine.object_manager'))", "@=service(parameter('boulzy_manager.default_manager'))"]
+    Boulzy\ManagerBundle\Collection\ManagerCollection:
         public: true
-
-    Boulzy\ManagerBundle\Manager\DefaultManager:
-        arguments: ["@=service(parameter('boulzy_manager.doctrine.object_manager'))"]

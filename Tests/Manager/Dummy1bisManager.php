@@ -9,14 +9,8 @@
  * file that was distributed with this source code.
  */
 
-namespace Boulzy\ManagerBundle\Manager;
+namespace Tests\Boulzy\ManagerBundle\Manager;
 
-/**
- * Base class for default managers.
- * 
- * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
- */
-class DefaultManager extends Manager
+class Dummy1bisManager extends Dummy1Manager
 {
-    use DefaultManagerTrait;
 }

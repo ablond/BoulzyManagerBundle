@@ -11,13 +11,14 @@
 
 namespace Boulzy\ManagerBundle\Manager;
 
-use Boulzy\ManagerBundle\Exception\UnsupportedClassException;
+use Boulzy\ManagerBundle\Exception\UnsupportedModelException;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
+use Doctrine\Common\Util\ClassUtils;
 
 /**
- * Manager for Doctrine entities/documents.
- * 
+ * A basic implementation of the ManagerInterface using Doctrine as the persistence layer.
+ *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 abstract class Manager implements ManagerInterface
@@ -30,7 +31,7 @@ abstract class Manager implements ManagerInterface
     /**
      * @var ObjectRepository
      */
-    protected $repository;
+    private $repository;
 
     public function __construct(ObjectManager $om)
     {
@@ -39,106 +40,165 @@ abstract class Manager implements ManagerInterface
 
     /**
      * Alias for ObjectRepository::find() method.
-     * 
-     * {@inheritDoc}
+     *
+     * {@inheritdoc}
      */
-    public function get($id)
+    final public function get($id)
     {
         return $this->getRepository()->find($id);
     }
 
     /**
      * Alias for ObjectRepository::findAll() method.
-     * 
-     * {@inheritDoc}
+     *
+     * {@inheritdoc}
      */
-    public function getAll(): array
+    final public function getAll(): array
     {
         return $this->getRepository()->findAll();
     }
 
     /**
      * Alias for ObjectRepository::findBy() method.
-     * 
-     * {@inheritDoc}
+     *
+     * {@inheritdoc}
      */
-    public function getBy(array $criteria, array $orderBy = null, $limit = null, $offset = null): array
+    final public function getBy(array $criteria, array $orderBy = null, $limit = null, $offset = null): array
     {
         return $this->getRepository()->findBy($criteria, $orderBy, $limit, $offset);
     }
 
     /**
      * Alias for ObjectRepository::findOneBy() method.
-     * 
-     * {@inheritDoc}
+     *
+     * {@inheritdoc}
      */
-    public function getOneBy(array $criteria)
+    final public function getOneBy(array $criteria)
     {
         return $this->getRepository()->findOneBy($criteria);
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public function create()
-    {
-        $class = $this->getClass();
-
-        return new $class();
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @throws UnsupportedClassException
-     */
-    public function save($object)
+    final public function create($object)
     {
         if (!$this->supports($object)) {
-            throw new UnsupportedClassException(get_class($object), self::class);
+            throw new UnsupportedModelException(ClassUtils::getClass($object), self::class);
         }
+
+        $this->onPreCreate($object);
 
         $this->om->persist($object);
         $this->om->flush();
+
+        $this->onPostCreate($object);
+
+        return $object;
     }
 
     /**
-     * {@inheritDoc}
-     * 
-     * @throws UnsupportedClassException
+     * {@inheritdoc}
      */
-    public function delete($object)
+    final public function update($object)
     {
         if (!$this->supports($object)) {
-            throw new UnsupportedClassException(get_class($object), self::class);
+            throw new UnsupportedModelException(ClassUtils::getClass($object), self::class);
         }
+
+        $this->onPreUpdate($object);
+
+        $this->om->flush();
+
+        $this->onPostUpdate($object);
+
+        return $object;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @throws UnsupportedClassException
+     */
+    final public function delete($object)
+    {
+        if (!$this->supports($object)) {
+            throw new UnsupportedModelException(ClassUtils::getClass($object), self::class);
+        }
+
+        $this->onPreDelete($object);
 
         $this->om->remove($object);
         $this->om->flush();
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public function supports($object): bool
+    final public function supports($object): bool
     {
-        $class = is_object($object) ? get_class($object) : $object;
+        $class = is_object($object) ? ClassUtils::getClass($object) : $object;
         $supportedClass = $this->getClass();
 
         return $class === $supportedClass || is_subclass_of($class, $supportedClass);
     }
 
-    /**
-     * Gets the class repository.
-     * 
-     * @return ObjectRepository
-     */
-    public function getRepository(): ObjectRepository
+    final protected function getRepository(): ObjectRepository
     {
-        if ($this->repository === null) {
+        if (null === $this->repository) {
             $this->repository = $this->om->getRepository($this->getClass());
         }
 
         return $this->repository;
+    }
+
+    /**
+     * This method is called before a model is created.
+     *
+     * @param object $object
+     */
+    protected function onPreCreate($object)
+    {
+        // Implements logic for pre-create actions here
+    }
+
+    /**
+     * This method is called after a model is created.
+     *
+     * @param object $object
+     */
+    protected function onPostCreate($object)
+    {
+        // Implements logic for post-create actions here
+    }
+
+    /**
+     * This method is called before a model is updated.
+     *
+     * @param object $object
+     */
+    protected function onPreUpdate($object)
+    {
+        // Implements logic for pre-update actions here
+    }
+
+    /**
+     * This method is called after a model is updated.
+     *
+     * @param object $object
+     */
+    protected function onPostUpdate($object)
+    {
+        // Implements logic for post-update actions here
+    }
+
+    /**
+     * This method is called before a model is deleted.
+     *
+     * @param object $object
+     */
+    protected function onPreDelete($object)
+    {
+        // Implements logic for pre-delete actions here
     }
 }

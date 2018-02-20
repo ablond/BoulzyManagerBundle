@@ -9,13 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Boulzy\ManagerBundle\Tests\Model;
+namespace Tests\Boulzy\ManagerBundle\Manager;
 
-/**
- * Dummy model used to test the bundle.
- * 
- * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
- */
-class UnsupportedDummy
+use Tests\Boulzy\ManagerBundle\Model\Dummy2;
+
+class Dummy2Manager extends Dummy1Manager
 {
+    public function getClass(): string
+    {
+        return Dummy2::class;
+    }
 }

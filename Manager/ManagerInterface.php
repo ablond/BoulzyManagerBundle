@@ -13,79 +13,80 @@ namespace Boulzy\ManagerBundle\Manager;
 
 /**
  * Interface to be implemented by model managers.
- * 
+ *
+ * A model manager is responsible for the domain logic that applies to the model.
+ * Therefore, you should have one manager by model.
+ *
+ * This interface provides basic methods to handle your models. You should add methods fitting to the actions performed
+ * on your models in your implementation of this interface.
+ *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 interface ManagerInterface
 {
     /**
-     * Gets an object by an identifier.
-     * 
-     * @param mixed $id
-     * @return object
+     * Creates a new model.
+     *
+     * @internal this method should be used to persist in some way the model and attribute him an identifier
+     *
+     * @param object $object an instance of the managed class
+     *
+     * @return object the managed object after its creation
+     *
+     * @throws \Boulzy\ManagerBundle\Exception\UnsupportedModelException
      */
-    public function get($id);
+    public function create($object);
 
     /**
-     * Gets all objects.
-     * 
-     * @return array
+     * Returns a model by its identifier.
+     *
+     * @internal this method should be used to retrieve a model from a persistence layer by its identifier
+     *
+     * @param mixed $identifier
+     *
+     * @return object a new instance of the managed class
      */
-    public function getAll(): array;
+    public function get($identifier);
 
     /**
-     * Gets objects by a set of criteria.
-     * 
-     * @param array $criteria
-     * @param array|null $orderBy
-     * @param int|null $limit
-     * @param int|null $offset
-     * @return array
+     * Updates a model.
+     *
+     * @internal this method should be used to update a model using the persistence layer
+     *
+     * @param object $object an instance of the managed class
+     *
+     * @return object the managed object after its update
+     *
+     * @throws \Boulzy\ManagerBundle\Exception\UnsupportedModelException
      */
-    public function getBy(array $criteria, array $orderBy = null, $limit = null, $offset = null): array;
+    public function update($object);
 
     /**
-     * Gets an object by a set of criteria.
-     * 
-     * @param array $criteria
-     * @return object
-     */
-    public function getOneBy(array $criteria);
-
-    /**
-     * Creates a new object.
-     * 
-     * @return object
-     */
-    public function create();
-
-    /**
-     * Saves an object.
-     * 
-     * @param object $object
-     * @throws \InvalidArgumentException The object is not supported by the manager.
-     */
-    public function save($object);
-
-    /**
-     * Deletes an object.
-     * 
-     * @param object $object
-     * @throws \InvalidArgumentException The object is not supported by the manager.
+     * Deletes a model.
+     *
+     * @internal this method should be used to delete a model from the persistence layer
+     *
+     * @param object $object an instance of the managed class
+     *
+     * @throws \Boulzy\ManagerBundle\Exception\UnsupportedModelException
      */
     public function delete($object);
 
     /**
-     * Checks if the manager supports this class.
-     * 
-     * @return bool
-     */
-    public function supports($class): bool;
-
-    /**
-     * Gets managed object class.
-     * 
+     * Returns the fully qualified managed class name.
+     *
      * @return string
      */
     public function getClass(): string;
+
+    /**
+     * Checks if the tested element (it can be a fully qualified class name or an object) is supported by this manager.
+     * Every public method called with an unsupported parameter should throw a
+     * Boulzy\ManagerBundle\Exception\UnsupportedModelException exception.
+     *
+     * @param object|string $testedElement can be a fully qualified class name or an object
+     *
+     * @return bool true if the tested element is supported by this manager, false otherwise
+     */
+    public function supports($testedElement): bool;
 }

@@ -11,22 +11,23 @@
 
 namespace Boulzy\ManagerBundle;
 
-use Boulzy\ManagerBundle\DependencyInjection\Compiler\ManagerPass;
+use Boulzy\ManagerBundle\DependencyInjection\Compiler\ManagerCollectionPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
  * Bundle definition.
- * 
+ *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 class BoulzyManagerBundle extends Bundle
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function build(ContainerBuilder $container)
     {
-        $container->addCompilerPass(new ManagerPass());
+        // Adds the registered manager to the factory
+        $container->addCompilerPass(new ManagerCollectionPass());
     }
 }
