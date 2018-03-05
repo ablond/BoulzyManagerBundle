@@ -11,10 +11,10 @@
 
 namespace Tests\Boulzy\ManagerBundle\Manager;
 
-use Boulzy\ManagerBundle\Manager\Manager;
+use Boulzy\ManagerBundle\Manager\DoctrineManager;
 use Tests\Boulzy\ManagerBundle\Model\Dummy1;
 
-class Dummy1Manager extends Manager
+class Dummy1Manager extends DoctrineManager
 {
     public function getClass(): string
     {

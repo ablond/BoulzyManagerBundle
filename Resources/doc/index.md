@@ -77,11 +77,11 @@ Here is an example of what an `App\Entity\User` model might look like using Doct
     
     use App\Entity\User;
     use App\Mailer\UserMailer;
-    use Boulzy\ManagerBundle\Manager\Manager;
+    use Boulzy\ManagerBundle\Manager\DoctrineManager;
     use Doctrine\ORM\EntityManager;
     use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
     
-    class UserManager extends Manager
+    class UserManager extends DoctrineManager
     {
         private $encoder;
     

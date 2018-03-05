@@ -15,6 +15,7 @@ use Boulzy\ManagerBundle\Exception\UnsupportedModelException;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Tests\Boulzy\ManagerBundle\Model\Dummy1;
 use Tests\Boulzy\ManagerBundle\Model\Dummy4;
 
@@ -130,5 +131,38 @@ class ManagerTest extends TestCase
         $dummy1Manager = new Dummy1Manager($om);
         $this->expectException(UnsupportedModelException::class);
         $dummy1Manager->delete($model);
+    }
+
+    public function testOnFailedMethods()
+    {
+        $model = new Dummy1();
+
+        $om = $this->createMock(ObjectManager::class);
+        $logger = $this->createMock(LoggerInterface::class);
+        /*$logger
+            ->expects($this->exactly(3))
+            ->method('alert')
+            ->with('Database is down.')
+        ;*/
+
+        $buggedManager = new BuggedManager($om, $logger);
+
+        try {
+            $buggedManager->create($model);
+        } catch (\Exception $e) {
+            $this->assertSame('Database is down.', $e->getMessage());
+        }
+
+        try {
+            $buggedManager->update($model);
+        } catch (\Exception $e) {
+            $this->assertSame('Database is down.', $e->getMessage());
+        }
+
+        try {
+            $buggedManager->delete($model);
+        } catch (\Exception $e) {
+            $this->assertSame('Database is down.', $e->getMessage());
+        }
     }
 }

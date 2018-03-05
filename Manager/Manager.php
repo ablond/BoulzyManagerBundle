@@ -12,85 +12,32 @@
 namespace Boulzy\ManagerBundle\Manager;
 
 use Boulzy\ManagerBundle\Exception\UnsupportedModelException;
-use Doctrine\Common\Persistence\ObjectManager;
-use Doctrine\Common\Persistence\ObjectRepository;
-use Doctrine\Common\Util\ClassUtils;
+use Boulzy\ManagerBundle\Util\ClassHelper;
 
 /**
- * A basic implementation of the ManagerInterface using Doctrine as the persistence layer.
+ * Abstract class to be extended by most managers that don't rely on Doctrine.
  *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 abstract class Manager implements ManagerInterface
 {
     /**
-     * @var ObjectManager
-     */
-    protected $om;
-
-    /**
-     * @var ObjectRepository
-     */
-    private $repository;
-
-    public function __construct(ObjectManager $om)
-    {
-        $this->om = $om;
-    }
-
-    /**
-     * Alias for ObjectRepository::find() method.
-     *
      * {@inheritdoc}
      */
-    final public function get($id)
-    {
-        return $this->getRepository()->find($id);
-    }
-
-    /**
-     * Alias for ObjectRepository::findAll() method.
-     *
-     * {@inheritdoc}
-     */
-    final public function getAll(): array
-    {
-        return $this->getRepository()->findAll();
-    }
-
-    /**
-     * Alias for ObjectRepository::findBy() method.
-     *
-     * {@inheritdoc}
-     */
-    final public function getBy(array $criteria, array $orderBy = null, $limit = null, $offset = null): array
-    {
-        return $this->getRepository()->findBy($criteria, $orderBy, $limit, $offset);
-    }
-
-    /**
-     * Alias for ObjectRepository::findOneBy() method.
-     *
-     * {@inheritdoc}
-     */
-    final public function getOneBy(array $criteria)
-    {
-        return $this->getRepository()->findOneBy($criteria);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    final public function create($object)
+    public function create($object)
     {
         if (!$this->supports($object)) {
-            throw new UnsupportedModelException(ClassUtils::getClass($object), self::class);
+            throw new UnsupportedModelException(ClassHelper::getClass($object), self::class);
         }
 
         $this->onPreCreate($object);
 
-        $this->om->persist($object);
-        $this->om->flush();
+        try {
+            $this->save($object);
+        } catch (\Exception $e) {
+            $this->onCreateFailed($object, $e);
+            throw $e;
+        }
 
         $this->onPostCreate($object);
 
@@ -100,15 +47,20 @@ abstract class Manager implements ManagerInterface
     /**
      * {@inheritdoc}
      */
-    final public function update($object)
+    public function update($object)
     {
         if (!$this->supports($object)) {
-            throw new UnsupportedModelException(ClassUtils::getClass($object), self::class);
+            throw new UnsupportedModelException(ClassHelper::getClass($object), self::class);
         }
 
         $this->onPreUpdate($object);
 
-        $this->om->flush();
+        try {
+            $this->save($object);
+        } catch (\Exception $e) {
+            $this->onUpdateFailed($object, $e);
+            throw $e;
+        }
 
         $this->onPostUpdate($object);
 
@@ -123,34 +75,43 @@ abstract class Manager implements ManagerInterface
     final public function delete($object)
     {
         if (!$this->supports($object)) {
-            throw new UnsupportedModelException(ClassUtils::getClass($object), self::class);
+            throw new UnsupportedModelException(ClassHelper::getClass($object), self::class);
         }
 
         $this->onPreDelete($object);
 
-        $this->om->remove($object);
-        $this->om->flush();
+        try {
+            $this->doDelete($object);
+        } catch (\Exception $e) {
+            $this->onDeleteFailed($object, $e);
+            throw $e;
+        }
     }
 
     /**
      * {@inheritdoc}
      */
-    final public function supports($object): bool
+    public function supports($object): bool
     {
-        $class = is_object($object) ? ClassUtils::getClass($object) : $object;
+        $class = ClassHelper::getClass($object);
         $supportedClass = $this->getClass();
 
         return $class === $supportedClass || is_subclass_of($class, $supportedClass);
     }
 
-    final protected function getRepository(): ObjectRepository
-    {
-        if (null === $this->repository) {
-            $this->repository = $this->om->getRepository($this->getClass());
-        }
+    /**
+     * Method used to save a model in the persistence layer.
+     *
+     * @param $object
+     */
+    abstract protected function save($object);
 
-        return $this->repository;
-    }
+    /**
+     * Method used to delete a model in the persistence layer.
+     *
+     * @param $object
+     */
+    abstract protected function doDelete($object);
 
     /**
      * This method is called before a model is created.
@@ -170,6 +131,17 @@ abstract class Manager implements ManagerInterface
     protected function onPostCreate($object)
     {
         // Implements logic for post-create actions here
+    }
+
+    /**
+     * This method is called when a model creation has failed.
+     *
+     * @param $object
+     * @param \Exception|null $e
+     */
+    protected function onCreateFailed($object, \Exception $e = null)
+    {
+        // Implements logic for when creation fails here
     }
 
     /**
@@ -193,6 +165,17 @@ abstract class Manager implements ManagerInterface
     }
 
     /**
+     * This method is called after a model update has failed.
+     *
+     * @param $object
+     * @param \Exception|null $e
+     */
+    protected function onUpdateFailed($object, \Exception $e = null)
+    {
+        // Implements logic for when update fails here
+    }
+
+    /**
      * This method is called before a model is deleted.
      *
      * @param object $object
@@ -200,5 +183,16 @@ abstract class Manager implements ManagerInterface
     protected function onPreDelete($object)
     {
         // Implements logic for pre-delete actions here
+    }
+
+    /**
+     * This method is called after a model deletion has failed.
+     *
+     * @param $object
+     * @param \Exception|null $e
+     */
+    protected function onDeleteFailed($object, \Exception $e = null)
+    {
+        // Implements logic for when delete fails here
     }
 }
