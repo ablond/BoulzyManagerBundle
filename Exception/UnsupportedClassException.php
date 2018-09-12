@@ -12,26 +12,22 @@
 namespace Boulzy\ManagerBundle\Exception;
 
 /**
- * Exception thrown when a manager is dealing with a model it doesn't support.
+ * Exception thrown when a manager is dealing with an object it doesn't support.
  *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
-class UnsupportedModelException extends \Exception
+class UnsupportedObjectException extends \Exception
 {
     const MESSAGE = 'Unsupported class "%s". Expecting an instance of "%s".';
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $expectedClass;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $actualClass;
 
     /**
-     * UnsupportedModelException constructor.
+     * UnsupportedObjectException constructor.
      *
      * @param string          $expectedClass
      * @param string          $actualClass
@@ -43,7 +39,7 @@ class UnsupportedModelException extends \Exception
         $this->expectedClass = $expectedClass;
         $this->actualClass = $actualClass;
 
-        parent::__construct(sprintf(self::MESSAGE, $expectedClass, $actualClass), $code, $previous);
+        parent::__construct(\sprintf(self::MESSAGE, $expectedClass, $actualClass), $code, $previous);
     }
 
     /**

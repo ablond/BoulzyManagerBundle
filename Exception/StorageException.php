@@ -9,8 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Tests\Boulzy\ManagerBundle\Model;
+namespace Boulzy\ManagerBundle\Exception;
 
-class Dummy4
+/**
+ * Exception thrown when a storage related exception is catched.
+ *
+ * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
+ */
+class StorageException extends \RuntimeException
 {
 }

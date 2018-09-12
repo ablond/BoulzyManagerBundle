@@ -32,8 +32,10 @@ class BoulzyManagerExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        //$configuration = new Configuration();
-        //$config = $this->processConfiguration($configuration, $configs);
+        $configuration = new Configuration();
+        $config = $this->processConfiguration($configuration, $configs);
+
+        $container->setParameter('boulzy_manager.default_storage_adapter', $config['default_storage_adapter']);
 
         $container->registerForAutoconfiguration(ManagerCollectionInterface::class)->addTag('boulzy_manager.collection');
         $container->registerForAutoconfiguration(ManagerInterface::class)->addTag('boulzy_manager.manager');

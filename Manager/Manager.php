@@ -12,6 +12,7 @@
 namespace Boulzy\ManagerBundle\Manager;
 
 use Boulzy\ManagerBundle\Exception\UnsupportedModelException;
+use Boulzy\ManagerBundle\Storage\Adapter\StorageAdapterInterface;
 use Boulzy\ManagerBundle\Util\ClassHelper;
 
 /**
@@ -21,48 +22,109 @@ use Boulzy\ManagerBundle\Util\ClassHelper;
  */
 abstract class Manager implements ManagerInterface
 {
+    const ON_PRE_CREATE = 'onPreCreate';
+    const ON_POST_CREATE = 'onPostCreate';
+    const ON_CREATE_FAILED = 'onCreateFailed';
+
+    const ON_PRE_UPDATE = 'onPreUpdate';
+    const ON_POST_UPDATE = 'onPostUpdate';
+    const ON_UPDATE_FAILED = 'onUpdateFailed';
+
+    const ON_PRE_DELETE = 'onPreDelete';
+    const ON_DELETE_FAILED = 'onDeleteFailed';
+
+    /** @var StorageAdapterInterface */
+    protected $storage;
+
+    /** @var null|array */
+    private $subscribers;
+
+    /** @param StorageAdapterInterface $storage */
+    public function __construct(StorageAdapterInterface $storage)
+    {
+        $this->storage = $storage;
+    }
+
     /**
+     * Alias for ObjectRepository::find() method.
+     *
      * {@inheritdoc}
      */
-    public function create($object)
+    public function find($id)
+    {
+        return $this->storage->find($this->getClass(), $id);
+    }
+
+    /**
+     * Alias for ObjectRepository::findAll() method.
+     *
+     * {@inheritdoc}
+     */
+    public function findAll(): array
+    {
+        return $this->storage->findAll($this->getClass());
+    }
+
+    /**
+     * Alias for ObjectRepository::findBy() method.
+     *
+     * {@inheritdoc}
+     */
+    public function findBy(array $criteria, array $orderBy = null, ?int $limit = null, ?int $offset = null): array
+    {
+        return $this->storage->findBy($this->getClass(), $criteria, $orderBy, $limit, $offset);
+    }
+
+    /**
+     * Alias for ObjectRepository::findOneBy() method.
+     *
+     * {@inheritdoc}
+     */
+    public function findOneBy(array $criteria)
+    {
+        return $this->storage->findOneBy($this->getClass(), $criteria);
+    }
+
+    /** {@inheritdoc} */
+    final public function create($object)
     {
         if (!$this->supports($object)) {
             throw new UnsupportedModelException(ClassHelper::getClass($object), self::class);
         }
 
-        $this->onPreCreate($object);
+        $this->dispatchInternalEvent(self::ON_PRE_CREATE, $object);
 
         try {
             $this->save($object);
         } catch (\Exception $e) {
-            $this->onCreateFailed($object, $e);
+            $this->dispatchInternalEvent(self::ON_CREATE_FAILED, $object);
+
             throw $e;
         }
 
-        $this->onPostCreate($object);
+        $this->dispatchInternalEvent(self::ON_POST_CREATE, $object);
 
         return $object;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function update($object)
+    /** {@inheritdoc} */
+    final public function update($object)
     {
         if (!$this->supports($object)) {
             throw new UnsupportedModelException(ClassHelper::getClass($object), self::class);
         }
 
-        $this->onPreUpdate($object);
+        $this->dispatchInternalEvent(self::ON_PRE_UPDATE, $object);
 
         try {
             $this->save($object);
         } catch (\Exception $e) {
-            $this->onUpdateFailed($object, $e);
+            $this->dispatchInternalEvent(self::ON_UPDATE_FAILED, $object);
+
             throw $e;
         }
 
-        $this->onPostUpdate($object);
+        $this->dispatchInternalEvent(self::ON_POST_UPDATE, $object);
 
         return $object;
     }
@@ -78,12 +140,13 @@ abstract class Manager implements ManagerInterface
             throw new UnsupportedModelException(ClassHelper::getClass($object), self::class);
         }
 
-        $this->onPreDelete($object);
+        $this->dispatchInternalEvent(self::ON_PRE_DELETE, $object);
 
         try {
-            $this->doDelete($object);
+            $this->storage->delete($object);
         } catch (\Exception $e) {
-            $this->onDeleteFailed($object, $e);
+            $this->dispatchInternalEvent(self::ON_DELETE_FAILED, $object);
+
             throw $e;
         }
     }
@@ -100,99 +163,89 @@ abstract class Manager implements ManagerInterface
     }
 
     /**
+     * Return the subscribed events, their methods and priorities.
+     * Higher priorities are called first. Default priority is 0.
+     *
+     * Example:
+     * return array(
+     *      self::ON_PRE_CREATE => array(
+     *          array('checkAvailability', 10),
+     *          'bookOrder'
+     *      ),
+     *      self::ON_PRE_DELETE => array(
+     *          'cancelOrder'
+     *      )
+     * );
+     *
+     * @return array
+     */
+    protected function getSubscribedEvents(): array
+    {
+        return array();
+    }
+
+    /**
      * Method used to save a model in the persistence layer.
      *
      * @param $object
      */
-    abstract protected function save($object);
+    final protected function save($object)
+    {
+        $this->storage->save($object);
+    }
 
     /**
-     * Method used to delete a model in the persistence layer.
+     * Calls the subscriber methods of an event.
      *
+     * @param string $event
      * @param $object
      */
-    abstract protected function doDelete($object);
-
-    /**
-     * This method is called before a model is created.
-     *
-     * @param object $object
-     */
-    protected function onPreCreate($object)
+    final protected function dispatchInternalEvent(string $event, $object)
     {
-        // Implements logic for pre-create actions here
+        if ($this->subscribers === null) {
+            $this->registerInternalSubscribers();
+        }
+
+        if (!isset($this->subscribers[$event])) {
+            return;
+        }
+
+        $subscribers = $this->subscribers[$event];
+        foreach ($subscribers as $priority => $listeners) {
+            foreach ($listeners as $listener) {
+                $this->$listener($object);
+            }
+        }
     }
 
     /**
-     * This method is called after a model is created.
-     *
-     * @param object $object
+     * Registers the subscribers and their priority.
      */
-    protected function onPostCreate($object)
+    private function registerInternalSubscribers(): array
     {
-        // Implements logic for post-create actions here
-    }
+        $registeredSubscribers = array();
 
-    /**
-     * This method is called when a model creation has failed.
-     *
-     * @param $object
-     * @param \Exception|null $e
-     */
-    protected function onCreateFailed($object, \Exception $e = null)
-    {
-        // Implements logic for when creation fails here
-    }
+        $subscribers = $this->getSubscribedEvents();
 
-    /**
-     * This method is called before a model is updated.
-     *
-     * @param object $object
-     */
-    protected function onPreUpdate($object)
-    {
-        // Implements logic for pre-update actions here
-    }
+        foreach ($subscribers as $eventName => $params) {
+            if (\is_string($params)) {
+                $registeredSubscribers[$eventName][0][] = $params;
+            } else if (\is_string($params[0])) {
+                $priority = isset($params[1]) ? $params[1] : 0;
+                $registeredSubscribers[$eventName][$priority][] = $params;
+            } else {
+                foreach ($params as $listener) {
+                    $priority = isset($listener[1]) ? $listener[1] : 0;
+                    $registeredSubscribers[$eventName][$priority][] = $listener[0];
+                }
+            }
+        }
 
-    /**
-     * This method is called after a model is updated.
-     *
-     * @param object $object
-     */
-    protected function onPostUpdate($object)
-    {
-        // Implements logic for post-update actions here
-    }
+        $subscribedEvents = array_keys($registeredSubscribers);
+        foreach ($subscribedEvents as $subscribedEvent) {
+            krsort($registeredSubscribers[$subscribedEvent]);
+        }
 
-    /**
-     * This method is called after a model update has failed.
-     *
-     * @param $object
-     * @param \Exception|null $e
-     */
-    protected function onUpdateFailed($object, \Exception $e = null)
-    {
-        // Implements logic for when update fails here
-    }
-
-    /**
-     * This method is called before a model is deleted.
-     *
-     * @param object $object
-     */
-    protected function onPreDelete($object)
-    {
-        // Implements logic for pre-delete actions here
-    }
-
-    /**
-     * This method is called after a model deletion has failed.
-     *
-     * @param $object
-     * @param \Exception|null $e
-     */
-    protected function onDeleteFailed($object, \Exception $e = null)
-    {
-        // Implements logic for when delete fails here
+        $this->subscribers = $registeredSubscribers;
     }
 }

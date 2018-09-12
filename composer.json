@@ -33,7 +33,8 @@
 
         "doctrine/common": "^2.8",
         "phpunit/phpunit": "^7.0",
-        "friendsofphp/php-cs-fixer": "^2.2"
+        "friendsofphp/php-cs-fixer": "^2.2",
+        "doctrine/orm": "^2.6"
     },
     "minimum-stability": "stable"
 }

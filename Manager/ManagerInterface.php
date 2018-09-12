@@ -25,6 +25,45 @@ namespace Boulzy\ManagerBundle\Manager;
 interface ManagerInterface
 {
     /**
+     * Returns a model by its identifier.
+     *
+     * @internal this method should be used to retrieve a model from a persistence layer by its identifier
+     *
+     * @param mixed $identifier
+     *
+     * @return object|null a new instance of the managed class
+     */
+    public function find($identifier);
+
+    /**
+     * Returns all models supported by this manager.
+     *
+     * @return array
+     */
+    public function findAll(): array;
+
+    /**
+     * Returns a collection of models according to filters, sort parameters and pagination.
+     *
+     * @param array $criteria The criteria to filter the models
+     * @param array|null $orderBy The parameters to use to sort the results
+     * @param int[null $limit The number of results to return
+     * @param int|null $offset The index of the first element to return
+     *
+     * @return array
+     */
+    public function findBy(array $criteria, ?array $orderBy = null, ?int $limit = null, ?int $offset = null): array;
+
+    /**
+     * Returns a model according to criteria.
+     *
+     * @param array $criteria The criteria to filter the model
+     *
+     * @return object|null
+     */
+    public function findOneBy(array $criteria);
+
+    /**
      * Creates a new model.
      *
      * @internal this method should be used to persist in some way the model and attribute him an identifier
@@ -36,17 +75,6 @@ interface ManagerInterface
      * @throws \Boulzy\ManagerBundle\Exception\UnsupportedModelException
      */
     public function create($object);
-
-    /**
-     * Returns a model by its identifier.
-     *
-     * @internal this method should be used to retrieve a model from a persistence layer by its identifier
-     *
-     * @param mixed $identifier
-     *
-     * @return object a new instance of the managed class
-     */
-    public function get($identifier);
 
     /**
      * Updates a model.
