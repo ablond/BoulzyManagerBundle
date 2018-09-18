@@ -1,1 +1,9 @@
 services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Boulzy\ManagerBundle\:
+        resource: '../../*'
+        exclude: '../../{DependencyInjection,Exception,Resources,Tests,Util,vendor,BoulzyManagerBundle.php}'
