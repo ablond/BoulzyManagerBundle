@@ -4,7 +4,7 @@ Getting started with BoulzyManagerBundle
 Prerequisites
 -------------
 
-This version of the bundle requires PHP 7.1 or higher and Symfony 3.3 or higher.
+This version of the bundle requires PHP 7.1 or higher and Symfony 3.4 or higher.
 
 Installation
 ------------
