@@ -11,7 +11,7 @@
 
 namespace Tests\Boulzy\ManagerBundle\Exception;
 
-use Boulzy\ManagerBundle\Exception\UnsupportedModelException;
+use Boulzy\ManagerBundle\Exception\UnsupportedClassException;
 use PHPUnit\Framework\TestCase;
 use Tests\Boulzy\ManagerBundle\Model\Dummy1;
 use Tests\Boulzy\ManagerBundle\Model\Dummy2;
@@ -20,7 +20,7 @@ class UnsupportedModelExceptionTest extends TestCase
 {
     public function testGettersAndSetters()
     {
-        $unsupportedModelException = new UnsupportedModelException(Dummy1::class, Dummy2::class);
+        $unsupportedModelException = new UnsupportedClassException(Dummy1::class, Dummy2::class);
 
         $this->assertSame(Dummy1::class, $unsupportedModelException->getExpectedClass());
         $this->assertSame(Dummy2::class, $unsupportedModelException->getActualClass());

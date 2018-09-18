@@ -14,6 +14,7 @@ namespace Tests\Boulzy\ManagerBundle\DependencyInjection;
 use Boulzy\ManagerBundle\DependencyInjection\Compiler\DefaultStorageAdapterPass;
 use Boulzy\ManagerBundle\Storage\Adapter\DoctrineOrmAdapter;
 use Boulzy\ManagerBundle\Storage\Adapter\StorageAdapterInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -22,12 +23,14 @@ class DefaultStorageAdapterPassTest extends TestCase
 {
     public function testProcess()
     {
-        $container = new ContainerBuilder();
+        $em = $this->createMock(EntityManagerInterface::class);
 
+        $container = new ContainerBuilder();
         $container
             ->register(DoctrineOrmAdapter::class)
             ->setClass(DoctrineOrmAdapter::class)
-        ;
+            ->setArgument('om', $em);
+
         $container->setParameter('boulzy_manager.default_storage_adapter', DoctrineOrmAdapter::class);
 
         $pass = new DefaultStorageAdapterPass();
@@ -39,7 +42,6 @@ class DefaultStorageAdapterPassTest extends TestCase
 
     public function testProcessWithUnregisteredService()
     {
-
         $container = new ContainerBuilder();
 
         $container->setParameter('boulzy_manager.default_storage_adapter', DoctrineOrmAdapter::class);

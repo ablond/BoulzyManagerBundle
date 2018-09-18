@@ -31,6 +31,6 @@ class ConflictExceptionTest extends TestCase
 
         $this->assertSame($manager1, $conflictException->getManager1());
         $this->assertSame($manager2, $conflictException->getManager2());
-        $this->assertSame(Dummy1::class, $conflictException->getModel());
+        $this->assertSame(Dummy1::class, $conflictException->getObject());
     }
 }

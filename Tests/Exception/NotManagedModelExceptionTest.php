@@ -11,7 +11,7 @@
 
 namespace Tests\Boulzy\ManagerBundle\Exception;
 
-use Boulzy\ManagerBundle\Exception\NotManagedModelException;
+use Boulzy\ManagerBundle\Exception\NotManagedObjectException;
 use PHPUnit\Framework\TestCase;
 use Tests\Boulzy\ManagerBundle\Model\Dummy1;
 
@@ -19,7 +19,7 @@ class NotManagedModelExceptionTest extends TestCase
 {
     public function testGettersAndSetters()
     {
-        $notManagedModelException = new NotManagedModelException(Dummy1::class);
+        $notManagedModelException = new NotManagedObjectException(Dummy1::class);
 
         $this->assertSame(Dummy1::class, $notManagedModelException->getClass());
     }
