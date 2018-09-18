@@ -27,9 +27,7 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  */
 class BoulzyManagerExtension extends Extension
 {
-    /**
-     * {@inheritdoc}
-     */
+    /** {@inheritdoc} */
     public function load(array $configs, ContainerBuilder $container)
     {
         $configuration = new Configuration();
@@ -40,7 +38,7 @@ class BoulzyManagerExtension extends Extension
         $container->registerForAutoconfiguration(ManagerCollectionInterface::class)->addTag('boulzy_manager.collection');
         $container->registerForAutoconfiguration(ManagerInterface::class)->addTag('boulzy_manager.manager');
 
-        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.yml');
+//        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+//        $loader->load('services.yml');
     }
 }

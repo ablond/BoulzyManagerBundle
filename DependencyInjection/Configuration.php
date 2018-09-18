@@ -17,15 +17,13 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * Validates and merges configuration from the application configuration files.
- * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/configuration.html}
+ * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/configuration.html}.
  *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
 class Configuration implements ConfigurationInterface
 {
-    /**
-     * {@inheritdoc}
-     */
+    /** {@inheritdoc} */
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();

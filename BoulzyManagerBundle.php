@@ -11,7 +11,7 @@
 
 namespace Boulzy\ManagerBundle;
 
-use Boulzy\ManagerBundle\DependencyInjection\Compiler\ManagerCollectionPass;
+use Boulzy\ManagerBundle\DependencyInjection\Compiler\DefaultStorageAdapterPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
@@ -27,7 +27,6 @@ class BoulzyManagerBundle extends Bundle
      */
     public function build(ContainerBuilder $container)
     {
-        // Adds the registered manager to the factory
-        $container->addCompilerPass(new ManagerCollectionPass());
+        $container->addCompilerPass(new DefaultStorageAdapterPass());
     }
 }

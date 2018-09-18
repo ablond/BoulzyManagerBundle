@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the BoulzyManagerBundle package.
+ *
+ * (c) Rémi Houdelette <https://github.com/B0ulzy>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Boulzy\ManagerBundle\Storage\Adapter;
 
 use Boulzy\ManagerBundle\Exception\StorageException;
@@ -16,6 +25,11 @@ abstract class DoctrineAdapter implements StorageAdapterInterface
     /** @var ObjectManager */
     protected $om;
 
+    /**
+     * DoctrineAdapter constructor.
+     *
+     * @param ObjectManager $om
+     */
     public function __construct(ObjectManager $om)
     {
         $this->om = $om;
@@ -45,7 +59,7 @@ abstract class DoctrineAdapter implements StorageAdapterInterface
         return $this->getRepository($className)->findOneBy($criteria);
     }
 
-    /** @inheritdoc */
+    /** {@inheritdoc} */
     public function save($model)
     {
         try {
@@ -59,7 +73,7 @@ abstract class DoctrineAdapter implements StorageAdapterInterface
         }
     }
 
-    /** @inheritdoc */
+    /** {@inheritdoc} */
     public function refresh($model)
     {
         try {
@@ -69,7 +83,7 @@ abstract class DoctrineAdapter implements StorageAdapterInterface
         }
     }
 
-    /** @inheritdoc */
+    /** {@inheritdoc} */
     public function delete($model)
     {
         try {
@@ -84,6 +98,7 @@ abstract class DoctrineAdapter implements StorageAdapterInterface
      * Returns the class repository.
      *
      * @param string $className
+     *
      * @return ObjectRepository
      */
     public function getRepository(string $className): ObjectRepository

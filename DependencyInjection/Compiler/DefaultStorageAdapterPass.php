@@ -14,6 +14,7 @@ namespace Boulzy\ManagerBundle\DependencyInjection\Compiler;
 use Boulzy\ManagerBundle\Storage\Adapter\StorageAdapterInterface;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Sets an alias for the StorageAdapterInterface, providing a default adapter when using autowiring.
@@ -22,12 +23,20 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 class DefaultStorageAdapterPass implements CompilerPassInterface
 {
-    /** {@inheritdoc} */
+    /**
+     * {@inheritdoc}
+     *
+     * @throws ServiceNotFoundException The service provided as default storage provider does not exist
+     */
     public function process(ContainerBuilder $container)
     {
         $storageAdapterId = $container->getParameter('boulzy_manager.default_storage_adapter');
 
-        $storageAdapter = $container->findDefinition($storageAdapterId);
-        $container->setAlias(StorageAdapterInterface::class, $storageAdapter);
+        // Checks if the service with the given ID does exist.
+        if (!$container->has($storageAdapterId)) {
+            throw new ServiceNotFoundException($storageAdapterId);
+        }
+
+        $container->setAlias(StorageAdapterInterface::class, $storageAdapterId);
     }
 }
