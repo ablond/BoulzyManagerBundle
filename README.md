@@ -5,17 +5,11 @@ Boulzy\ModelManagerBundle
 [![Latest Stable Version](https://poser.pugx.org/boulzy/manager-bundle/v/stable)](https://packagist.org/packages/boulzy/manager-bundle)
 [![Total Downloads](https://poser.pugx.org/boulzy/manager-bundle/downloads)](https://packagist.org/packages/boulzy/manager-bundle)
 
-The Boulzy\ModelManagerBundle provides an implementable base to handle the domain models logic in a Symfony application.
-It ensures consistency in the way domain models logic is handled, reusability and ease the comprehension of the code along
-the application.
-
-Features:
-
-- An interface to be implemented by the managers, presenting basic methods to handle the models
-- A manager factory to easily retrieve a model manager
-- The possibility to use a default manager, in case the basic methods are enough for some models
-- A basic implementation using Doctrine as the models persistence layer
-- Unit tested with continuous integration
+The BoulzyManagerBundle is a library aiming to help shaping the business logic of a Symfony application. Managers are
+Symfony services used to manipulate an object (like business model objects) to centralize in one place the operations
+that can be perform on them. Homogenizing them makes the interactions between different managers easier as well as
+providing more confort for the developer. It also helps following the SOLID principles on the business logic part of the
+application.
 
 Documentation
 -------------

@@ -11,7 +11,7 @@
 
 namespace Boulzy\ManagerBundle\Manager;
 
-use Boulzy\ManagerBundle\Exception\UnsupportedModelException;
+use Boulzy\ManagerBundle\Exception\UnsupportedClassException;
 use Boulzy\ManagerBundle\Storage\Adapter\StorageAdapterInterface;
 use Boulzy\ManagerBundle\Util\ClassHelper;
 
@@ -22,24 +22,14 @@ use Boulzy\ManagerBundle\Util\ClassHelper;
  */
 abstract class Manager implements ManagerInterface
 {
-    const ON_PRE_CREATE = 'onPreCreate';
-    const ON_POST_CREATE = 'onPostCreate';
-    const ON_CREATE_FAILED = 'onCreateFailed';
-
-    const ON_PRE_UPDATE = 'onPreUpdate';
-    const ON_POST_UPDATE = 'onPostUpdate';
-    const ON_UPDATE_FAILED = 'onUpdateFailed';
-
-    const ON_PRE_DELETE = 'onPreDelete';
-    const ON_DELETE_FAILED = 'onDeleteFailed';
-
     /** @var StorageAdapterInterface */
     protected $storage;
 
-    /** @var null|array */
-    private $subscribers;
-
-    /** @param StorageAdapterInterface $storage */
+    /**
+     * Manager constructor.
+     *
+     * @param StorageAdapterInterface $storage
+     */
     public function __construct(StorageAdapterInterface $storage)
     {
         $this->storage = $storage;
@@ -88,21 +78,19 @@ abstract class Manager implements ManagerInterface
     /** {@inheritdoc} */
     final public function create($object)
     {
-        if (!$this->supports($object)) {
-            throw new UnsupportedModelException(ClassHelper::getClass($object), self::class);
-        }
+        $this->denyIfUnsupported($object);
 
-        $this->dispatchInternalEvent(self::ON_PRE_CREATE, $object);
+        $this->callMethod('onPreCreate', $object);
 
         try {
             $this->save($object);
         } catch (\Exception $e) {
-            $this->dispatchInternalEvent(self::ON_CREATE_FAILED, $object);
+            $this->callMethod('onCreateFailed', $object);
 
             throw $e;
         }
 
-        $this->dispatchInternalEvent(self::ON_POST_CREATE, $object);
+        $this->callMethod('onPostCreate', $object);
 
         return $object;
     }
@@ -110,21 +98,19 @@ abstract class Manager implements ManagerInterface
     /** {@inheritdoc} */
     final public function update($object)
     {
-        if (!$this->supports($object)) {
-            throw new UnsupportedModelException(ClassHelper::getClass($object), self::class);
-        }
+        $this->denyIfUnsupported($object);
 
-        $this->dispatchInternalEvent(self::ON_PRE_UPDATE, $object);
+        $this->callMethod('onPreUpdate', $object);
 
         try {
             $this->save($object);
         } catch (\Exception $e) {
-            $this->dispatchInternalEvent(self::ON_UPDATE_FAILED, $object);
+            $this->callMethod('onUpdateFailed', $object);
 
             throw $e;
         }
 
-        $this->dispatchInternalEvent(self::ON_POST_UPDATE, $object);
+        $this->callMethod('onPostUpdate', $object);
 
         return $object;
     }
@@ -136,56 +122,30 @@ abstract class Manager implements ManagerInterface
      */
     final public function delete($object)
     {
-        if (!$this->supports($object)) {
-            throw new UnsupportedModelException(ClassHelper::getClass($object), self::class);
-        }
+        $this->denyIfUnsupported($object);
 
-        $this->dispatchInternalEvent(self::ON_PRE_DELETE, $object);
+        $this->callMethod('onPreDelete', $object);
 
         try {
             $this->storage->delete($object);
         } catch (\Exception $e) {
-            $this->dispatchInternalEvent(self::ON_DELETE_FAILED, $object);
+            $this->callMethod('onDeleteFailed', $object);
 
             throw $e;
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    /** {@inheritdoc} */
     public function supports($object): bool
     {
         $class = ClassHelper::getClass($object);
         $supportedClass = $this->getClass();
 
-        return $class === $supportedClass || is_subclass_of($class, $supportedClass);
+        return $class === $supportedClass || \is_subclass_of($class, $supportedClass);
     }
 
     /**
-     * Return the subscribed events, their methods and priorities.
-     * Higher priorities are called first. Default priority is 0.
-     *
-     * Example:
-     * return array(
-     *      self::ON_PRE_CREATE => array(
-     *          array('checkAvailability', 10),
-     *          'bookOrder'
-     *      ),
-     *      self::ON_PRE_DELETE => array(
-     *          'cancelOrder'
-     *      )
-     * );
-     *
-     * @return array
-     */
-    protected function getSubscribedEvents(): array
-    {
-        return array();
-    }
-
-    /**
-     * Method used to save a model in the persistence layer.
+     * Method used to save an object in the persistence layer.
      *
      * @param $object
      */
@@ -195,57 +155,34 @@ abstract class Manager implements ManagerInterface
     }
 
     /**
-     * Calls the subscriber methods of an event.
+     * Throws an exception if the object is not supported by the manager.
      *
-     * @param string $event
      * @param $object
+     *
+     * @throws UnsupportedClassException
      */
-    final protected function dispatchInternalEvent(string $event, $object)
+    final protected function denyIfUnsupported($object)
     {
-        if ($this->subscribers === null) {
-            $this->registerInternalSubscribers();
-        }
-
-        if (!isset($this->subscribers[$event])) {
-            return;
-        }
-
-        $subscribers = $this->subscribers[$event];
-        foreach ($subscribers as $priority => $listeners) {
-            foreach ($listeners as $listener) {
-                $this->$listener($object);
-            }
+        if (!$this->supports($object)) {
+            throw new UnsupportedClassException(ClassHelper::getClass($object), self::class);
         }
     }
 
     /**
-     * Registers the subscribers and their priority.
+     * Calls a method if she exists.
+     * This is used to add some logic on CRUD methods for example.
+     *
+     * @param string $method
+     * @param object $object
+     *
+     * @return mixed
      */
-    private function registerInternalSubscribers(): array
+    final protected function callMethod(string $method, $object)
     {
-        $registeredSubscribers = array();
-
-        $subscribers = $this->getSubscribedEvents();
-
-        foreach ($subscribers as $eventName => $params) {
-            if (\is_string($params)) {
-                $registeredSubscribers[$eventName][0][] = $params;
-            } else if (\is_string($params[0])) {
-                $priority = isset($params[1]) ? $params[1] : 0;
-                $registeredSubscribers[$eventName][$priority][] = $params;
-            } else {
-                foreach ($params as $listener) {
-                    $priority = isset($listener[1]) ? $listener[1] : 0;
-                    $registeredSubscribers[$eventName][$priority][] = $listener[0];
-                }
-            }
+        if (\is_callable(array($this, $method))) {
+            return $this->$method($object);
         }
 
-        $subscribedEvents = array_keys($registeredSubscribers);
-        foreach ($subscribedEvents as $subscribedEvent) {
-            krsort($registeredSubscribers[$subscribedEvent]);
-        }
-
-        $this->subscribers = $registeredSubscribers;
+        return null;
     }
 }

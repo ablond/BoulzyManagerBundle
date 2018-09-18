@@ -14,7 +14,6 @@
                 <directory>./Resources</directory>
                 <directory>./Tests</directory>
                 <directory>./vendor</directory>
-                <file>BoulzyManagerBundle.php</file>
             </exclude>
         </whitelist>
     </filter>

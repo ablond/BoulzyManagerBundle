@@ -16,11 +16,18 @@ namespace Boulzy\ManagerBundle\Util;
  *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  *
- * @deprecated this class should not be used outside of this bundle as it will be removed soon
+ * @deprecated This class should not be used outside of this bundle as it will be removed soon
  */
 class ClassHelper
 {
-    public static function getClass($object)
+    /**
+     * Returns the real class of an object or a class (handle Doctrine proxies).
+     *
+     * @param object|string $object
+     *
+     * @return string
+     */
+    public static function getClass($object): string
     {
         $class = is_object($object) ? get_class($object) : $object;
 

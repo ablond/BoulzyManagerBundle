@@ -12,21 +12,19 @@
 namespace Boulzy\ManagerBundle\Exception;
 
 /**
- * Exception thrown when no manager can be found for a model.
+ * Exception thrown when no manager can be found for an object.
  *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
-class NotManagedModelException extends \Exception
+class NotManagedObjectException extends \Exception
 {
     const MESSAGE = 'No manager found for class "%s".';
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $class;
 
     /**
-     * NotManagedModelException constructor.
+     * NotManagedObjectException constructor.
      *
      * @param string          $class
      * @param \Throwable|null $previous
@@ -36,7 +34,7 @@ class NotManagedModelException extends \Exception
     {
         $this->class = $class;
 
-        parent::__construct(sprintf(self::MESSAGE, $class), $code, $previous);
+        parent::__construct(\sprintf(self::MESSAGE, $class), $code, $previous);
     }
 
     /**

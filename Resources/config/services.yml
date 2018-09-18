@@ -1,4 +1,1 @@
 services:
-    Boulzy\ManagerBundle\Collection\ManagerCollection:
-        public: true
-        tags: [ boulzy_manager.collection ]

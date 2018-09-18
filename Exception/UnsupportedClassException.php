@@ -16,7 +16,7 @@ namespace Boulzy\ManagerBundle\Exception;
  *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
-class UnsupportedObjectException extends \Exception
+class UnsupportedClassException extends \Exception
 {
     const MESSAGE = 'Unsupported class "%s". Expecting an instance of "%s".';
 

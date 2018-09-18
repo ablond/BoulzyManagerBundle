@@ -12,7 +12,7 @@
 namespace Boulzy\ManagerBundle\Exception;
 
 /**
- * Exception thrown when a storage related exception is catched.
+ * Exception thrown when a storage related exception is caught.
  *
  * @author Rémi Houdelette <b0ulzy.todo@gmail.com>
  */
