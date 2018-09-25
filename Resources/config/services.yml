@@ -1,3 +1,4 @@
 services:
     Boulzy\ManagerBundle\Collection\ManagerCollection:
         public: true
+        autoconfigure: true
